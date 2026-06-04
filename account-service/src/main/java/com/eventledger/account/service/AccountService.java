@@ -31,40 +31,14 @@ public class AccountService {
             TransactionRequest request) {
 
         /*
-         * Idempotency Layer 2
+         * Idempotency
          */
         if (transactionRepository.existsByEventId(
                 request.eventId())) {
-
             return;
         }
 
-        AccountEntity account =
-                accountRepository
-                        .findById(request.accountId())
-                        .orElse(
-                                AccountEntity.builder()
-                                        .accountId(
-                                                request.accountId())
-                                        .balance(BigDecimal.ZERO)
-                                        .build()
-                        );
-
-        if (request.type() == EventType.CREDIT) {
-
-            account.setBalance(
-                    account.getBalance()
-                            .add(request.amount()));
-        } else {
-
-            account.setBalance(
-                    account.getBalance()
-                            .subtract(request.amount()));
-        }
-
-        accountRepository.save(account);
-
-        AccountTransactionEntity tx =
+        AccountTransactionEntity transaction =
                 AccountTransactionEntity.builder()
                         .eventId(request.eventId())
                         .accountId(request.accountId())
@@ -75,7 +49,47 @@ public class AccountService {
                         .createdAt(Instant.now())
                         .build();
 
-        transactionRepository.save(tx);
+        transactionRepository.save(transaction);
+
+        recalculateBalance(request.accountId());
+    }
+
+    private void recalculateBalance(
+            String accountId) {
+
+        List<AccountTransactionEntity> transactions =
+                transactionRepository
+                        .findByAccountIdOrderByEventTimestampAsc(
+                                accountId);
+
+        BigDecimal balance = BigDecimal.ZERO;
+
+        for (AccountTransactionEntity tx : transactions) {
+
+            if (tx.getType() == EventType.CREDIT) {
+
+                balance = balance.add(
+                        tx.getAmount());
+
+            } else {
+
+                balance = balance.subtract(
+                        tx.getAmount());
+            }
+        }
+
+        AccountEntity account =
+                accountRepository
+                        .findById(accountId)
+                        .orElse(
+                                AccountEntity.builder()
+                                        .accountId(accountId)
+                                        .build()
+                        );
+
+        account.setBalance(balance);
+
+        accountRepository.save(account);
     }
 
     @Transactional(readOnly = true)
