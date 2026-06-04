@@ -1,6 +1,6 @@
 package com.eventledger.account.entity;
 
-import com.eventledger.account.enums.EventType;
+import com.eventledger.common.enums.EventType;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -13,4 +13,8 @@ public interface TransactionRepository
     List<AccountTransactionEntity>
     findTop10ByAccountIdOrderByEventTimestampDesc(
             String accountId);
+
+    List<AccountTransactionEntity>
+    findByAccountIdOrderByEventTimestampAsc(
+            String accountId);
 }

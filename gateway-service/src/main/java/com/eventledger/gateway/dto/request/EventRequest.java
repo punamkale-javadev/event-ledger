@@ -1,6 +1,6 @@
 package com.eventledger.gateway.dto.request;
 
-import com.eventledger.gateway.enums.EventType;
+import com.eventledger.common.enums.EventType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

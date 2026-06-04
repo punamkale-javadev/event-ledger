@@ -1,6 +1,61 @@
 server:
   port: 8080
 
+account:
+  service:
+    url: ${ACCOUNT_SERVICE_URL}
+
 spring:
   datasource:
     url: jdbc:h2:mem:gatewaydb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+    show-sql: true
+
+resilience4j:
+  circuitbreaker:
+
+    instances:
+
+      accountService:
+
+        slidingWindowSize: 5
+
+        minimumNumberOfCalls: 3
+
+        failureRateThreshold: 50
+
+        waitDurationInOpenState: 10s
+
+        permittedNumberOfCallsInHalfOpenState: 2
+
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  pattern:
+    console: >
+      %d{yyyy-MM-dd HH:mm:ss}
+      [%thread]
+      %-5level
+      [%X{traceId}]
+      %logger
+      - %msg%n

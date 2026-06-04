@@ -1,4 +1,4 @@
-package com.eventledger.account.enums;
+package com.eventledger.common.enums;
 
 public enum EventType {
     CREDIT,

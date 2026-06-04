@@ -15,6 +15,12 @@
 <artifactId>gateway-service</artifactId>
 
 <dependencies>
+    <!-- Common module -->
+    <dependency>
+        <groupId>com.eventledger</groupId>
+        <artifactId>common</artifactId>
+        <version>1.0.0</version>
+    </dependency>
 
     <!-- REST APIs -->
     <dependency>
