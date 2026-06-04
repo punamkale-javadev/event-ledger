@@ -3,7 +3,7 @@ server:
 
 account:
   service:
-    url: http://localhost:8081
+    url: ${ACCOUNT_SERVICE_URL}
 
 spring:
   datasource:
