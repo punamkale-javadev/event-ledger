@@ -2,38 +2,42 @@
 
 ## Overview
 
-Event Ledger is a distributed microservices-based system for processing financial transaction events.
+Event Ledger is a microservices-based transaction processing system implemented using Spring Boot.
 
-The system consists of two independently deployable services:
+The solution consists of two independently deployable services:
 
-1. **Event Gateway Service** (public-facing)
-2. **Account Service** (internal)
+* **Event Gateway Service**
+* **Account Service**
 
-The solution is designed to handle:
+The system supports:
 
-* Idempotent event processing
-* Out-of-order event delivery
-* Distributed trace propagation
+* Transaction event submission
+* Account balance updates
+* Duplicate event handling (idempotency)
+* Distributed tracing across services
+* Structured logging
 * Health monitoring
-* Resiliency between services
-* Independent service execution
+* Metrics and observability
+* Service resiliency using Circuit Breaker
+* Docker-based execution
 
 ---
 
 # Architecture Overview
 
-## Event Gateway API
+## Event Gateway Service
 
 Responsibilities:
 
-* Receives transaction events
+* Receives incoming transaction events
 * Validates request payload
-* Enforces idempotency
-* Stores event records locally
-* Calls Account Service to apply transactions
-* Supports event retrieval APIs
+* Detects duplicate events
+* Generates and propagates trace IDs
+* Calls Account Service synchronously
+* Applies resiliency policies
+* Stores event data
 
-Endpoints:
+Main APIs:
 
 ```http
 POST /events
@@ -42,24 +46,37 @@ GET /events?account={accountId}
 GET /health
 ```
 
+Database:
+
+```text
+H2 Embedded Database
+```
+
 ---
 
 ## Account Service
 
 Responsibilities:
 
-* Maintains account balances
-* Applies transactions
-* Provides balance and account information
-* Stores account state independently
+* Receives transaction requests
+* Updates account balances
+* Recalculates balances
+* Stores transaction history
+* Logs propagated trace IDs
+* Exposes metrics and health information
 
-Endpoints:
+Main APIs:
 
 ```http
-POST /accounts/{accountId}/transactions
+POST /accounts/transactions
 GET /accounts/{accountId}/balance
-GET /accounts/{accountId}
 GET /health
+```
+
+Database:
+
+```text
+H2 Embedded Database
 ```
 
 ---
@@ -68,41 +85,95 @@ GET /health
 
 ```text
 Client
-   |
-   | HTTP
-   v
+  │
+  │ HTTP
+  ▼
+
 Event Gateway
-   |
-   | REST Call
-   v
+
+  │
+  │ REST + traceId
+  ▼
+
 Account Service
+
+  │
+  ▼
+
+H2 Database
 ```
 
-Flow:
+Processing Flow:
 
 1. Client submits event to Gateway
-2. Gateway validates request
-3. Gateway stores event
+2. Gateway generates trace ID
+3. Gateway validates and checks duplicate event
 4. Gateway calls Account Service
 5. Account Service updates balance
 6. Response returned to client
-
-Each service maintains its own H2 database.
 
 ---
 
 # Technology Stack
 
-* Java 21
-* Spring Boot
-* Spring Data JPA
-* H2 Database
-* Maven
-* Docker
-* Docker Compose
-* Resilience4j
-* JUnit
-* OpenTelemetry (Trace Propagation)
+Language:
+
+```text
+Java 21
+```
+
+Framework:
+
+```text
+Spring Boot
+```
+
+Database:
+
+```text
+H2 Database
+```
+
+Communication:
+
+```text
+REST API
+```
+
+Containerization:
+
+```text
+Docker
+Docker Compose
+```
+
+Resiliency:
+
+```text
+Resilience4j Circuit Breaker
+```
+
+Tracing:
+
+```text
+Trace ID propagation using HTTP headers
+```
+
+Observability:
+
+```text
+Actuator
+Structured Logging
+Metrics
+```
+
+Testing:
+
+```text
+JUnit
+Spring Boot Test
+Mockito
+```
 
 ---
 
@@ -121,8 +192,11 @@ Verify installation:
 
 ```bash
 java -version
+
 mvn -version
+
 docker --version
+
 docker compose version
 ```
 
@@ -138,19 +212,23 @@ git clone <repository-url>
 cd event-ledger
 ```
 
-Build both services:
+Build projects:
 
 ```bash
 cd event-gateway
-mvn clean install
 
+mvn clean package
+```
+
+```bash
 cd ../account-service
-mvn clean install
+
+mvn clean package
 ```
 
 ---
 
-# Start Application
+# Start Services
 
 ## Option 1 — Docker Compose (Recommended)
 
@@ -160,7 +238,13 @@ Build and start:
 docker compose up --build
 ```
 
-Application URLs:
+Stop:
+
+```bash
+docker compose down
+```
+
+Service URLs:
 
 Gateway:
 
@@ -174,12 +258,6 @@ Account Service:
 http://localhost:8081
 ```
 
-Stop:
-
-```bash
-docker compose down
-```
-
 ---
 
 ## Option 2 — Manual Start
@@ -188,6 +266,7 @@ Terminal 1:
 
 ```bash
 cd event-gateway
+
 mvn spring-boot:run
 ```
 
@@ -195,33 +274,112 @@ Terminal 2:
 
 ```bash
 cd account-service
+
 mvn spring-boot:run
 ```
 
 ---
 
-# Health Endpoints
+# Health Checks
 
 Gateway:
 
 ```http
-GET /health
+GET http://localhost:8080/health
 ```
 
-Account Service:
+Account:
 
 ```http
-GET /health
+GET http://localhost:8081/health
 ```
 
 Example:
 
 ```json
 {
-  "service":"event-gateway",
   "status":"UP",
   "database":"CONNECTED"
 }
+```
+
+---
+
+# Distributed Tracing
+
+Trace propagation implemented without OpenTelemetry.
+
+Implementation:
+
+* Gateway generates trace ID
+* Trace ID stored in MDC
+* Trace ID propagated through HTTP headers
+* Account Service reads trace ID
+* Both services include trace ID in logs
+
+Example:
+
+```text
+traceId=9d83d4
+
+Gateway
+↓
+
+Account Service
+```
+
+---
+
+# Observability
+
+## Structured Logging
+
+Logs contain:
+
+* Timestamp
+* Log level
+* Trace ID
+* Service name
+
+Example:
+
+```json
+{
+ "timestamp":"",
+ "level":"INFO",
+ "traceId":"abc123",
+ "service":"gateway"
+}
+```
+
+---
+
+## Metrics
+
+Implemented custom metrics:
+
+Gateway:
+
+```text
+events.submitted
+```
+
+Account Service:
+
+```text
+account.transactions
+```
+
+Access:
+
+```text
+/actuator/metrics
+```
+
+Example:
+
+```text
+/actuator/metrics/events.submitted
 ```
 
 ---
@@ -234,71 +392,120 @@ Run all tests:
 mvn test
 ```
 
-Tests cover:
-
-* Event validation
-* Idempotency
-* Out-of-order events
-* Balance calculation
-* Health endpoint
-* Integration testing
-* Trace propagation
-* Resiliency scenarios
-
-Generate reports:
+Gateway tests:
 
 ```bash
-mvn verify
+cd event-gateway
+
+mvn test
 ```
+
+Account tests:
+
+```bash
+cd account-service
+
+mvn test
+```
+
+Covered scenarios:
+
+* Event submission
+* Duplicate event handling
+* Account transaction processing
+* Balance calculation
+* Health endpoints
+* Trace propagation
+* Integration testing
 
 ---
 
 # Resiliency Pattern Choice
 
-This implementation uses:
+Implemented:
 
-## Timeout + Retry with Backoff
+## Circuit Breaker (Resilience4j)
 
 Reason:
 
-The Event Gateway depends on Account Service to apply transactions.
+Gateway depends on Account Service.
 
-To improve reliability:
-
-* Timeout prevents hanging requests
-* Retry handles temporary failures
-* Backoff avoids overwhelming downstream services
+Circuit Breaker protects the system from repeated failures and improves availability.
 
 Behavior:
 
 ```text
 Gateway
-   |
+
+↓
+
 Call Account Service
-   |
+
+↓
+
 Failure
-   |
-Retry
-   |
-Timeout
-   |
-Return 503
+
+↓
+
+Circuit Opens
+
+↓
+
+Fallback
+
+↓
+
+503 SERVICE_UNAVAILABLE
 ```
 
-If Account Service remains unavailable:
+Fallback:
 
-* POST /events returns HTTP 503
-* GET event APIs continue working using Gateway local data
+* Prevents repeated downstream failures
+* Returns controlled response
+* Supports graceful degradation
 
-This provides graceful degradation while maintaining availability.
+---
+
+# Constraints Followed
+
+* Language: Java
+* Database: Separate H2 DB per service
+* Communication: Synchronous REST
+* Tracing: Trace ID propagation
+* Docker Compose supported
+* Spring Boot framework
+
+---
+
+# Repository Submission
+
+Repository includes:
+
+* Source code
+* Docker configuration
+* README
+* Tests
+
+Commit history reflects implementation progress and is preserved without squashing.
+
+Example:
+
+```text
+feature/gateway
+
+feature/account
+
+feature/docker
+
+feature/observability
+```
 
 ---
 
 # Future Improvements
 
+* OpenTelemetry integration
+* Prometheus + Grafana
 * Kubernetes deployment
-* Prometheus metrics
-* Jaeger tracing
-* Circuit breaker
-* Event queue fallback
-* External database support
+* Distributed cache
+* Queue-based communication
