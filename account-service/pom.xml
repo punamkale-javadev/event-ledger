@@ -9,6 +9,7 @@
         <groupId>com.eventledger</groupId>
         <artifactId>event-ledger</artifactId>
         <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>account-service</artifactId>
