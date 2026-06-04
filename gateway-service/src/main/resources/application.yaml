@@ -1,6 +1,10 @@
 server:
   port: 8080
 
+account:
+  service:
+    url: http://localhost:8081
+
 spring:
   datasource:
     url: jdbc:h2:mem:gatewaydb
@@ -17,3 +21,31 @@ spring:
       ddl-auto: update
 
     show-sql: true
+
+resilience4j:
+  circuitbreaker:
+
+    instances:
+
+      accountService:
+
+        slidingWindowSize: 5
+
+        minimumNumberOfCalls: 3
+
+        failureRateThreshold: 50
+
+        waitDurationInOpenState: 10s
+
+        permittedNumberOfCallsInHalfOpenState: 2
+
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
