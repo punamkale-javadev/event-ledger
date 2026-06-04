@@ -17,3 +17,20 @@ spring:
       ddl-auto: update
 
     show-sql: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          health,
+          metrics
+
+logging:
+  pattern:
+    console: >
+      %d{yyyy-MM-dd HH:mm:ss}
+      [%thread]
+      %-5level
+      [%X{traceId}]
+      %logger
+      - %msg%n

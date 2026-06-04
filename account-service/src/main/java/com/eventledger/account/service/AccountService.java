@@ -7,11 +7,14 @@ import com.eventledger.account.entity.AccountEntity;
 import com.eventledger.account.entity.AccountTransactionEntity;
 import com.eventledger.account.exception.AccountNotFoundException;
 import com.eventledger.account.mapper.AccountMapper;
+import com.eventledger.account.metrics.AccountMetricService;
 import com.eventledger.account.repository.AccountRepository;
 import com.eventledger.account.repository.TransactionRepository;
 import com.eventledger.common.dto.TransactionRequest;
 import com.eventledger.common.enums.EventType;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,13 +26,20 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional
 public class AccountService {
+    private static final Logger log =
+            LoggerFactory.getLogger( AccountService.class );
 
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final AccountMetricService metricService;
 
     public void applyTransaction(
             TransactionRequest request) {
+        log.info(
+                "Applying transaction for account={}",
 
+                request.accountId()
+        );
         /*
          * Idempotency
          */
@@ -48,9 +58,12 @@ public class AccountService {
                                 request.eventTimestamp())
                         .createdAt(Instant.now())
                         .build();
+        log.info(
+                "Balance updated"
+        );
 
         transactionRepository.save(transaction);
-
+        metricService.increment();
         recalculateBalance(request.accountId());
     }
 
