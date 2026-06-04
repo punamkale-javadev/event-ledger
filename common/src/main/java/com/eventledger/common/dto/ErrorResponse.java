@@ -1,4 +1,4 @@
-package com.eventledger.gateway.dto.response;
+package com.eventledger.common.dto;
 
 import java.time.Instant;
 
