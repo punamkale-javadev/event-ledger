@@ -16,6 +16,12 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>com.eventledger</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- REST APIs -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -59,7 +65,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
