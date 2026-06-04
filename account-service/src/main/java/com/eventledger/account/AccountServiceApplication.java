@@ -1,11 +1,12 @@
-package com.eventledger;
+package com.eventledger.account;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+
 @SpringBootApplication
-public class GatewayServiceApplication {
+public class AccountServiceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(
-                GatewayServiceApplication.class,args);
+                AccountServiceApplication.class,args);
     }
 }
