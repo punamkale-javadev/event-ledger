@@ -12,6 +12,5 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface AccountServiceClient {
 
     @PostMapping("/internal/transactions")
-    void applyTransaction(
-            @RequestBody TransactionRequest request);
+    void applyTransaction(@RequestBody TransactionRequest request);
 }

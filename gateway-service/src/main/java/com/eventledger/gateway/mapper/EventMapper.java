@@ -5,7 +5,7 @@ import com.eventledger.gateway.dto.response.EventResponse;
 import com.eventledger.gateway.entity.EventEntity;
 
 import java.time.Instant;
-import java.util.Map;
+import java.util.Collections;
 
 public final class EventMapper {
 
@@ -13,8 +13,7 @@ public final class EventMapper {
     }
 
     public static EventEntity toEntity(
-            EventRequest request,
-            String metadataJson) {
+            EventRequest request) {
 
         return EventEntity.builder()
                 .eventId(request.eventId())
@@ -23,15 +22,16 @@ public final class EventMapper {
                 .amount(request.amount())
                 .currency(request.currency())
                 .eventTimestamp(request.eventTimestamp())
-                .metadata(metadataJson)
+                .metadata(
+                        request.metadata() == null
+                                ? null
+                                : request.metadata().toString())
                 .createdAt(Instant.now())
                 .build();
     }
 
     public static EventResponse toResponse(
-            EventEntity entity,
-            Map<String, Object> metadata,
-            String status) {
+            EventEntity entity) {
 
         return new EventResponse(
                 entity.getEventId(),
@@ -40,8 +40,7 @@ public final class EventMapper {
                 entity.getAmount(),
                 entity.getCurrency(),
                 entity.getEventTimestamp(),
-                metadata,
-                status
+                Collections.emptyMap()
         );
     }
 }

@@ -18,9 +18,6 @@ public record EventResponse(
 
         Instant eventTimestamp,
 
-        Map<String, Object> metadata,
-
-        String status
-
+        Map<String, Object> metadata
 ) {
 }

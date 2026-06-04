@@ -1,6 +1,7 @@
 package com.eventledger.gateway.exception;
 
 import com.eventledger.common.dto.ErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,9 +14,9 @@ import java.time.Instant;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EventNotFoundException.class)
-    public ResponseEntity<ErrorResponse>
-    handleEventNotFound(
-            EventNotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleEventNotFound(
+            EventNotFoundException ex,
+            HttpServletRequest request) {
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(
@@ -24,37 +25,40 @@ public class GlobalExceptionHandler {
                                 404,
                                 "NOT_FOUND",
                                 ex.getMessage(),
-                                null
+                                request.getRequestURI()
                         )
                 );
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse>
-    handleValidation(
-            MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleValidation(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
 
         String message =
                 ex.getBindingResult()
                         .getFieldErrors()
-                        .getFirst()
-                        .getDefaultMessage();
+                        .stream()
+                        .findFirst()
+                        .map(error -> error.getDefaultMessage())
+                        .orElse("Validation failed");
 
         return ResponseEntity.badRequest()
                 .body(
                         new ErrorResponse(
                                 Instant.now(),
                                 400,
-                                "BAD_REQUEST",
+                                "VALIDATION_ERROR",
                                 message,
-                                null
+                                request.getRequestURI()
                         )
                 );
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse>
-    handleGeneric(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleGeneric(
+            Exception ex,
+            HttpServletRequest request) {
 
         return ResponseEntity.internalServerError()
                 .body(
@@ -63,7 +67,26 @@ public class GlobalExceptionHandler {
                                 500,
                                 "INTERNAL_SERVER_ERROR",
                                 ex.getMessage(),
-                                null
+                                request.getRequestURI()
+                        )
+                );
+    }
+    @ExceptionHandler(
+            AccountServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse>
+    handleAccountServiceUnavailable(
+            AccountServiceUnavailableException ex,
+            HttpServletRequest request) {
+
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(
+                        new ErrorResponse(
+                                Instant.now(),
+                                503,
+                                "SERVICE_UNAVAILABLE",
+                                ex.getMessage(),
+                                request.getRequestURI()
                         )
                 );
     }

@@ -3,8 +3,8 @@ package com.eventledger.gateway.exception;
 public class AccountServiceUnavailableException
         extends RuntimeException {
 
-    public AccountServiceUnavailableException() {
+    public AccountServiceUnavailableException(String msg) {
 
-        super("Account Service is currently unavailable");
+        super(msg);
     }
 }
